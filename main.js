@@ -4,8 +4,6 @@ const token = process.env.token;
 const client = new discord.Client({});
 const goldBot = 5, goldTop = 10;
 const errorTimeout = 15E3;
-console.log("Channel is");
-console.log(channelID);
 
 const resources = {
     "Wood": ["BM"],
@@ -265,10 +263,10 @@ client.addListener("message", function (message) {
 client.login(token);
 
 function setupChannel() {
-    console.log("Searching for channel");
+    if (!isReady) console.log("Searching for channel (" + channelID + ")");
     client.channels.fetch(channelID).then(function (channel) {
-        console.log("Found channel");
-        console.log("Reading messages...");
+        if (!isReady) console.log("Found channel");
+        if (!isReady) console.log("Reading messages...");
         channel.messages.fetch().then(function (list) {
             if (isReady) {
                 list.forEach(readMessage);
