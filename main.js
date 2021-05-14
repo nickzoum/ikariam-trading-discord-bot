@@ -23,31 +23,61 @@ var fullData = {
     "Trading": {},
     "Open Trades": {},
     "Black Market": {}
-}, lastMessage, isReady;
+}, isReady;
+/** @type {discord.Message} */
+var lastMessage;
 
 var stringify = {
+    /**
+     * @param {number} item 
+     * @returns {string}
+     */
     "CTs": function (count) { return count; },
+    /**
+     * @param {number} item 
+     * @returns {string}
+     */
     "Friend Slots": function (count) { return count; },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
     "Buying": function (item) {
         return Object.entries(item).map(function ([type, description]) {
             return `\n>    **${description.amount}** **${type}** at **${description.start}${description.stop ? "- " + description.stop : ""}g**`;
         }).join("");
     },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
     "Selling": function (item) {
         return Object.entries(item).map(function ([type, description]) {
             return `\n>    **${description.amount}** **${type}** at **${description.start}${description.stop ? "-" + description.stop : ""}g**`;
         }).join("");
     },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
     "Trading": function (item) {
         return Object.entries(item).map(function ([desiredType, description]) {
             return `\n>    Wants **${description.amount}** **${desiredType}** in exchange for **${description.otherAmount}** **${description.otherType}**`;
         }).join("");
     },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
     "Open Trades": function (item) {
         return Object.entries(item).map(function ([type, description]) {
             return `\n>    ${description.mode} **${description.amount}** **${type}**`;
         }).join("");
     },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
     "Black Market": function (item) {
         return Object.entries(item).map(function ([location, level]) {
             return `\n>    [${location}]: ${level}`;
@@ -56,8 +86,20 @@ var stringify = {
 };
 
 var parse = {
+    /**
+     * @param {string} text 
+     * @returns {number}
+     */
     "CTs": function (text) { return text.replace(/\s/g, "") | 0; },
+    /**
+     * @param {string} text 
+     * @returns {number}
+     */
     "Friend Slots": function (text) { return text.replace(/\s/g, "") | 0; },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
     "Buying": function (text) {
         var list = (text || "").split(/\s*>\s+/).slice(1);
         return list.reduce(function (output, text) {
@@ -68,6 +110,10 @@ var parse = {
             return output;
         }, {});
     },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
     "Selling": function (text) {
         var list = (text || "").split(/\s*>\s+/).slice(1);
         return list.reduce(function (output, text) {
@@ -78,6 +124,10 @@ var parse = {
             return output;
         }, {});
     },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
     "Trading": function (text) {
         var list = (text || "").split(/\s*>\s+/).slice(1);
         return list.reduce(function (output, text) {
@@ -88,6 +138,10 @@ var parse = {
             return output;
         }, {});
     },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
     "Open Trades": function (text) {
         var list = (text || "").split(/\s*>\s+/).slice(1);
         return list.reduce(function (output, text) {
@@ -99,6 +153,10 @@ var parse = {
             return output;
         }, {});
     },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
     "Black Market": function (text) {
         var list = (text || "").split(/\s*>\s+/).slice(1);
         return list.reduce(function (output, text) {
@@ -112,6 +170,11 @@ var parse = {
 };
 
 const commands = {
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @returns {boolean | undefined}
+     */
     "(\\d+)\\s*(?:fs|friend\\s*slots?)": function (count) {
         count = count | 0;
         if (count < 1) return "Didn't define amount";
@@ -119,6 +182,11 @@ const commands = {
         return true;
         //    return `${this.username} has ${count} free friend slot${count - 1 ? "s" : ""} (${count}fs)`;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @returns {boolean | undefined}
+     */
     "(\\d+)\\s*ct": function (count) {
         count = count | 0;
         if (count < 1) return "Didn't define amount";
@@ -126,6 +194,15 @@ const commands = {
         return true;
         //   return `${this.username} has ${count} free cultural treat${count - 1 ? "ies" : "y"} (${count}ct)`;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @param {boolean} thousand 
+     * @param {number} type 
+     * @param {number} start 
+     * @param {number} [stop] 
+     * @returns {boolean | undefined}
+     */
     "WTS\\s+(\\d+)(k?)\\s*(\\w+)\\s*(?:(?:for|at)\\s+)?(\\d+)\\s*(?:-\\s*(\\d+)\\s*)?g?": function (count, thousand, type, start, stop) {
         count = count | 0;
         start = start | 0;
@@ -143,6 +220,15 @@ const commands = {
         return true;
         //   return `${this.username} want to sell ${count} ${type} at ${start}${stop ? "- " + stop : ""}g`;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @param {boolean} thousand 
+     * @param {number} type 
+     * @param {number} start 
+     * @param {number} [stop] 
+     * @returns {boolean | undefined}
+     */
     "WTB\\s+(\\d+)(k?)\\s*(\\w+)\\s*(?:(?:for|at)\\s+)?(\\d+)\\s*(?:-\\s*(\\d+)\\s*)?g?": function (count, thousand, type, start, stop) {
         count = count | 0;
         start = start | 0;
@@ -160,6 +246,16 @@ const commands = {
         return true;
         //     return `${this.username} want to buy ${count} ${type} at ${start}${stop ? "- " + stop : ""}g`;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @param {boolean} thousand 
+     * @param {number} type 
+     * @param {number} desiredCount 
+     * @param {boolean} desiredThousand 
+     * @param {number} desiredType 
+     * @returns {boolean | undefined}
+     */
     "WTT\\s+(\\d+)(k?)\\s*(\\w+)\\s+(?:for\\s+)?(\\d+)(k?)\\s*(\\w+)": function (count, thousand, type, desiredCount, desiredThousand, desiredType) {
         count = count | 0;
         desiredCount = desiredCount | 0;
@@ -180,6 +276,13 @@ const commands = {
         fullData["Trading"][username][desiredType] = { amount: desiredCount, otherType: type, otherAmount: count };
         return true;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @param {boolean} thousand 
+     * @param {number} type 
+     * @returns {boolean | undefined}
+     */
     "tw\\s+(\\d+)(k?)\\s*(\\w+)": function (count, thousand, type) {
         count = count | 0;
         if (count < 1) return "Didn't define amount";
@@ -192,6 +295,13 @@ const commands = {
         fullData["Open Trades"][username][type] = { amount: count, mode: modes.wants };
         return true;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} count 
+     * @param {boolean} thousand 
+     * @param {number} type 
+     * @returns {boolean | undefined}
+     */
     "to\\s+(\\d+)(k?)\\s*(\\w+)": function (count, thousand, type) {
         count = count | 0;
         if (count < 1) return "Didn't define amount";
@@ -204,6 +314,13 @@ const commands = {
         fullData["Open Trades"][username][type] = { amount: count, mode: modes.offers };
         return true;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} level 
+     * @returns {boolean | undefined}
+     */
     "bm\\s+(\\d+)\\s*:\\s*(\\d+)\\s+(?:lvl)?\\s*(\\d+)?": function (x, y, level) {
         x = x | 0;
         y = y | 0;
@@ -217,6 +334,11 @@ const commands = {
         if (!Object.keys(fullData["Black Market"][username]).length) delete fullData["Black Market"][username];
         return true;
     },
+    /**
+     * @this {discord.GuildMember}
+     * @param {string} clearMode
+     * @returns {boolean | undefined}
+     */
     "clear(?:\\s*(fs|ct|wts|wtb|wtt|all|bm|tw|to|\\*))?": function (clearMode) {
         var shortcuts = {
             "fs": "Friend Slots",
@@ -267,6 +389,7 @@ function setupChannel() {
     client.channels.fetch(channelID).then(function (channel) {
         if (!isReady) console.log("Found channel");
         if (!isReady) console.log("Reading messages...");
+        if (!(channel instanceof discord.TextChannel)) throw Error("Custom Error: channel isn't text");
         channel.messages.fetch().then(function (list) {
             if (isReady) {
                 list.forEach(readMessage);
@@ -301,6 +424,11 @@ function setupChannel() {
     });
 }
 
+/**
+ * 
+ * @param {discord.Message} message 
+ * @returns 
+ */
 function readMessage(message) {
     if (!message.member) {
         message.guild.members.fetch(message.author.id).then(function (member) {
@@ -340,8 +468,13 @@ function readMessage(message) {
     });
 }
 
+/**
+ * 
+ * @param {string} message 
+ */
 function readOldMessage(message) {
-    var type = null;
+    /** @type {string} */
+    var type;
     var infoList = message.split(/__\*\*Trades\*\*__:\s*/);
     message = infoList[1] || infoList[2];
     var list = message.split(/\s*__([^*_]+)__/).slice(1);
