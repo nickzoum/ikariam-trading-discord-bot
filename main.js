@@ -1,5 +1,6 @@
 const discord = require("discord.js");
-const channels = ["842798314143612968"];
+const channelID = process.env.channelID;
+const token = process.env.token;
 const client = new discord.Client({});
 const goldBot = 5, goldTop = 10;
 const errorTimeout = 15E3;
@@ -22,7 +23,7 @@ var fullData = {
     "Trading": {},
     "Open Trades": {},
     "Black Market": {}
-}, lastMessages = {};
+}, lastMessage, isReady;
 
 var stringify = {
     "CTs": function (count) { return count; },
@@ -109,8 +110,6 @@ var parse = {
         }, {});
     }
 };
-
-var readyChannels = {};
 
 const commands = {
     "(\\d+)\\s*(?:fs|friend\\s*slots?)": function (count) {
@@ -245,33 +244,35 @@ Object.entries(resources).forEach(function ([name, list]) {
 });
 
 client.addListener("ready", function () {
-    channels.forEach(function (id) {
-        client.channels.fetch(id).then(setupChannel).catch(function () {
-        });
+    console.log("Connecting...");
+    client.channels.fetch(channelID).then(setupChannel).catch(function (err) {
+        console.error("Failed to connect to channel");
+        console.error(err);
     });
 });
 
 client.addListener("guildCreate", function (guild) {
-    channels.forEach(function (id) {
-        if (readyChannels[id]) return;
-        var channel = guild.channels.cache.find(channel => channel.id === id);
-        if (channel) setupChannel(channel);
-    });
+    if (isReady) return;
+    var channel = guild.channels.cache.find(channel => channel.id === channelID);
+    if (channel) setupChannel(channel);
 });
 
 client.addListener("message", function (message) {
-    if (!readyChannels[message.channel.id] || !channels.includes(message.channel.id)) return;
+    if (!isReady || channelID !== message.channel.id) return;
     readMessage(message);
-    printLargeMessage(message.channel);
+    printLargeMessage();
 });
 
-client.login(process.env.token);
+client.login(token);
 
 function setupChannel(channel) {
+    console.log("Connected to channel");
+    console.log("Reading messages...");
     channel.messages.fetch().then(function (list) {
-        if (readyChannels[channel.id]) {
+        if (isReady) {
             list.forEach(readMessage);
-            printLargeMessage(channel);
+            printLargeMessage();
+            console.log("Read all messages");
             return;
         }
         var lastMessage = null;
@@ -282,18 +283,19 @@ function setupChannel(channel) {
             }
         });
         if (lastMessage) {
-            lastMessages[channel.id] = lastMessage;
             readOldMessage(lastMessage.content);
-            readyChannels[channel.id] = true;
+            isReady = true;
             setupChannel(channel);
         } else {
             channel.send(createLargeMessage()).then(function (message) {
-                readyChannels[channel.id] = true;
+                isReady = true;
                 lastMessage = message;
-                lastMessages[channel.id] = lastMessage;
                 setupChannel(channel);
             });
         }
+    }).catch(function (err) {
+        console.error("Failed to read messages");
+        console.error(err);
     });
 }
 
@@ -306,7 +308,7 @@ function readMessage(message) {
                 if (!data[member.nickname]) data[member.nickname] = data[message.author.username];
                 delete data[message.author.username];
             });
-            printLargeMessage(message.channel);
+            printLargeMessage();
         });
     }
     var text = message.content, member = message.member || { user: message.author };
@@ -354,8 +356,7 @@ function readOldMessage(message) {
     });
 }
 
-function printLargeMessage(channel) {
-    var lastMessage = lastMessages[channel.id];
+function printLargeMessage() {
     lastMessage.edit(createLargeMessage());
 }
 

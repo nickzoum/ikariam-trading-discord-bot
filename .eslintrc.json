@@ -26,11 +26,10 @@
         ],
         "no-cond-assign": "off",
         "no-throw-literal": "error",
-        "no-console": "warn"
+        "no-console": "off"
     },
     "globals": {
-        "ezDefine": "readonly",
-        "rootURL": "readonly",
+        "process": "readonly",
         "require": "readonly"
     }
 }
