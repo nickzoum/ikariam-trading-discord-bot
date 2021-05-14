@@ -1,0 +1,7 @@
+{
+    "esversion": 6,
+    "validthis": true,
+    "funcscope": true,
+    "-W083": false,
+    "-W084": false
+}
