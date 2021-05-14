@@ -4,6 +4,8 @@ const token = process.env.token;
 const client = new discord.Client({});
 const goldBot = 5, goldTop = 10;
 const errorTimeout = 15E3;
+console.log("Channel IS");
+console.log(channelID);
 
 const resources = {
     "Wood": ["BM"],
@@ -244,17 +246,14 @@ Object.entries(resources).forEach(function ([name, list]) {
 });
 
 client.addListener("ready", function () {
-    console.log("Connecting...");
-    client.channels.fetch(channelID).then(setupChannel).catch(function (err) {
-        console.error("Failed to connect to channel");
-        console.error(err);
-    });
+    console.log("Bot is running");
+    setupChannel();
 });
 
-client.addListener("guildCreate", function (guild) {
+client.addListener("guildCreate", function () {
     if (isReady) return;
-    var channel = guild.channels.cache.find(channel => channel.id === channelID);
-    if (channel) setupChannel(channel);
+    console.log("Joined new server");
+    setupChannel();
 });
 
 client.addListener("message", function (message) {
@@ -265,36 +264,42 @@ client.addListener("message", function (message) {
 
 client.login(token);
 
-function setupChannel(channel) {
-    console.log("Connected to channel");
-    console.log("Reading messages...");
-    channel.messages.fetch().then(function (list) {
-        if (isReady) {
-            list.forEach(readMessage);
-            printLargeMessage();
-            console.log("Read all messages");
-            return;
-        }
-        var lastMessage = null;
-        list.forEach(function (message) {
-            if (message.author.id === client.user.id) {
-                if (lastMessage) lastMessage.delete();
-                lastMessage = message;
+function setupChannel() {
+    console.log("Searching for channel");
+    client.channels.fetch(channelID).then(function (channel) {
+        console.log("Found channel");
+        console.log("Reading messages...");
+        channel.messages.fetch().then(function (list) {
+            if (isReady) {
+                list.forEach(readMessage);
+                printLargeMessage();
+                console.log("Read all messages");
+                return;
             }
-        });
-        if (lastMessage) {
-            readOldMessage(lastMessage.content);
-            isReady = true;
-            setupChannel(channel);
-        } else {
-            channel.send(createLargeMessage()).then(function (message) {
-                isReady = true;
-                lastMessage = message;
-                setupChannel(channel);
+            var lastMessage = null;
+            list.forEach(function (message) {
+                if (message.author.id === client.user.id) {
+                    if (lastMessage) lastMessage.delete();
+                    lastMessage = message;
+                }
             });
-        }
+            if (lastMessage) {
+                readOldMessage(lastMessage.content);
+                isReady = true;
+                setupChannel(channel);
+            } else {
+                channel.send(createLargeMessage()).then(function (message) {
+                    isReady = true;
+                    lastMessage = message;
+                    setupChannel(channel);
+                });
+            }
+        }).catch(function (err) {
+            console.error("Failed to read messages");
+            console.error(err);
+        });
     }).catch(function (err) {
-        console.error("Failed to read messages");
+        console.error("Couldn't find channel");
         console.error(err);
     });
 }
