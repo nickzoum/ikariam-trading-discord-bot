@@ -4,7 +4,7 @@ const token = process.env.token;
 const client = new discord.Client({});
 const goldBot = 5, goldTop = 10;
 const errorTimeout = 15E3;
-console.log("Channel IS");
+console.log("Channel is");
 console.log(channelID);
 
 const resources = {
@@ -276,7 +276,6 @@ function setupChannel() {
                 console.log("Read all messages");
                 return;
             }
-            var lastMessage = null;
             list.forEach(function (message) {
                 if (message.author.id === client.user.id) {
                     if (lastMessage) lastMessage.delete();
