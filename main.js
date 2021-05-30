@@ -177,8 +177,9 @@ const commands = {
      */
     "(\\d+)\\s*(?:fs|friend\\s*slots?)": function (count) {
         count = count | 0;
-        if (count < 1) return "Didn't define amount";
-        fullData["Friend Slots"][this.nickname || this.user.username] = count;
+        if (count < 0) return "Invalid amount";
+        if (!count) delete fullData["Friend Slots"][this.nickname || this.user.username];
+        else fullData["Friend Slots"][this.nickname || this.user.username] = count;
         return true;
         //    return `${this.username} has ${count} free friend slot${count - 1 ? "s" : ""} (${count}fs)`;
     },
@@ -189,8 +190,9 @@ const commands = {
      */
     "(\\d+)\\s*ct": function (count) {
         count = count | 0;
-        if (count < 1) return "Didn't define amount";
-        fullData["CTs"][this.nickname || this.user.username] = count;
+        if (count < 0) return "Invalid amount";
+        if (!count) delete fullData["CTs"][this.nickname || this.user.username];
+        else fullData["CTs"][this.nickname || this.user.username] = count;
         return true;
         //   return `${this.username} has ${count} free cultural treat${count - 1 ? "ies" : "y"} (${count}ct)`;
     },
