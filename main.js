@@ -445,7 +445,7 @@ function readMessage(message) {
     }
     var text = message.content, member = message.member || { user: message.author };
     if (typeof text !== "string" || !text || member.user.bot) return;
-    addLastMessage(this.nickname || this.user.username, text);
+    addLastMessage(member.nickname || member.user.username, text);
     for (var key in commands) {
         var result = new RegExp("^\\s*" + key + "\\s*$", "gi").exec(text);
         if (result && result[0]) {
