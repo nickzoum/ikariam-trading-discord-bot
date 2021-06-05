@@ -22,8 +22,8 @@ var fullData = {
     "Selling": {},
     "Trading": {},
     "Open Trades": {},
-    "Black Market": {}
-}, isReady;
+    "Black Market": {},
+}, isReady, lastMessages = [];
 /** @type {discord.Message} */
 var lastMessage;
 
@@ -445,6 +445,7 @@ function readMessage(message) {
     }
     var text = message.content, member = message.member || { user: message.author };
     if (typeof text !== "string" || !text || member.user.bot) return;
+    addLastMessage(this.nickname || this.user.username, text);
     for (var key in commands) {
         var result = new RegExp("^\\s*" + key + "\\s*$", "gi").exec(text);
         if (result && result[0]) {
@@ -470,6 +471,12 @@ function readMessage(message) {
     });
 }
 
+function addLastMessage(person, message) {
+    if (!person) person = "Unknown User";
+    lastMessages.unshift({ person: person, message: message });
+    lastMessages.splice(3, lastMessages.length - 3);
+}
+
 /**
  * 
  * @param {string} message 
@@ -477,6 +484,15 @@ function readMessage(message) {
 function readOldMessage(message) {
     /** @type {string} */
     var type;
+    var textList = message.split(/__\*\*Last\s+Messages\*\*__:\s*/);
+    if (textList[1]) {
+        textList[1].split(/\n/).filter(Boolean).forEach(function (line) {
+            var result = /^(.+)\s+typed\s+`(.+)`$/.exec(line);
+            if (!result || !result[2]) return;
+            addLastMessage(result[1], result[2]);
+        });
+    }
+    message = textList[0];
     var infoList = message.split(/__\*\*Trades\*\*__:\s*/);
     message = infoList[1] || infoList[2];
     var list = message.split(/\s*__([^*_]+)__/).slice(1);
@@ -520,5 +536,9 @@ __**Trades**__:
             text += "\n> " + userName + ": " + stringify[category](data);
         });
         return text;
+    }).join("\n") + `
+__**Last Messages**__:
+` + lastMessages.map(function (message) {
+        return message.person + " said `" + message.message + "`";
     }).join("\n");
 }
