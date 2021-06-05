@@ -391,7 +391,7 @@ const commands = {
         if (typeof unit !== "string" || !unit.replace(/\s/g, "")) return "You must specify the unit type";
         fullData["Selling Units"][username] = fullData["Selling Units"][username] || {};
         fullData["Selling Units"][username][unit] = amount;
-        if (!amount) delete fullData["Selling Units"][username];
+        if (!amount) delete fullData["Selling Units"][username][unit];
         if (!Object.keys(fullData["Selling Units"][username]).length) delete fullData["Selling Units"][username];
         return true;
     },
@@ -402,7 +402,7 @@ const commands = {
         if (typeof unit !== "string" || !unit.replace(/\s/g, "")) return "You must specify the unit type";
         fullData["Buying Units"][username] = fullData["Buying Units"][username] || {};
         fullData["Buying Units"][username][unit] = amount;
-        if (!amount) delete fullData["Buying Units"][username];
+        if (!amount) delete fullData["Buying Units"][username][unit];
         if (!Object.keys(fullData["Buying Units"][username]).length) delete fullData["Buying Units"][username];
         return true;
     },
@@ -411,7 +411,7 @@ const commands = {
      * @param {string} clearMode
      * @returns {boolean | undefined}
      */
-    "clear(?:\\s*(fs|ct|wts|wtb|wtt|all|bm|tw|to|\\*))?": function (clearMode) {
+    "clear(?:\\s*(fs|ct|wts|wtb|wtt|all|bm|tw|to|su|bu|\\*))?": function (clearMode) {
         var shortcuts = {
             "fs": "Friend Slots",
             "ct": "CTs",
