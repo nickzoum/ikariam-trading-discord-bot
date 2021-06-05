@@ -384,7 +384,7 @@ const commands = {
         if (!Object.keys(fullData["Black Market"][username]).length) delete fullData["Black Market"][username];
         return true;
     },
-    "su\\s+(\\d+)\\s*(k?)\\s*(\\w+)\\s*(?:)?": function (amount, thousand, unit) {
+    "su\\s+(\\d+)\\s*(k?)\\s*([\\w\\s]+)": function (amount, thousand, unit) {
         amount = Math.max(amount | 0, 0);
         if (thousand) amount *= 1E3;
         var username = this.nickname || this.user.username;
@@ -395,7 +395,7 @@ const commands = {
         if (!Object.keys(fullData["Selling Units"][username]).length) delete fullData["Selling Units"][username];
         return true;
     },
-    "bu\\s+(\\d+)\\s*(k?)\\s*(\\w+)\\s*(?:)?": function (amount, thousand, unit) {
+    "bu\\s+(\\d+)\\s*(k?)\\s*([\\w\\s]+)": function (amount, thousand, unit) {
         amount = Math.max(amount | 0, 0);
         if (thousand) amount *= 1E3;
         var username = this.nickname || this.user.username;
