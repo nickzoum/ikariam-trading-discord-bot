@@ -23,6 +23,8 @@ var fullData = {
     "Trading": {},
     "Open Trades": {},
     "Black Market": {},
+    "Selling Units": {},
+    "Buying Units": {}
 }, isReady, lastMessages = [];
 /** @type {discord.Message} */
 var lastMessage;
@@ -81,6 +83,24 @@ var stringify = {
     "Black Market": function (item) {
         return Object.entries(item).map(function ([location, level]) {
             return `\n>    [${location}]: ${level}`;
+        }).join("");
+    },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
+    "Selling Units": function (item) {
+        return Object.entries(item).map(function ([unit, amount]) {
+            return `\n>    **${amount}** **${unit}**`;
+        }).join("");
+    },
+    /**
+     * @param {{}} item 
+     * @returns {string}
+     */
+    "Buying Units": function (item) {
+        return Object.entries(item).map(function ([unit, amount]) {
+            return `\n>    **${amount}** **${unit}**`;
         }).join("");
     }
 };
@@ -164,6 +184,34 @@ var parse = {
             if (!result) return output;
             var [, location, level] = result;
             output[location] = level;
+            return output;
+        }, {});
+    },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
+    "Selling Units": function (text) {
+        var list = (text || "").split(/\s*>\s+/).slice(1);
+        return list.reduce(function (output, text) {
+            var result = /\*\*(\d+)\*\*\s+\*\*(\w+)\*\*/.exec(text);
+            if (!result) return output;
+            var [, amount, unit] = result;
+            output[unit] = amount;
+            return output;
+        }, {});
+    },
+    /**
+     * @param {string} text 
+     * @returns {{}}
+     */
+    "Buying Units": function (text) {
+        var list = (text || "").split(/\s*>\s+/).slice(1);
+        return list.reduce(function (output, text) {
+            var result = /\*\*(\d+)\*\*\s+\*\*(\w+)\*\*/.exec(text);
+            if (!result) return output;
+            var [, amount, unit] = result;
+            output[unit] = amount;
             return output;
         }, {});
     }
@@ -336,6 +384,28 @@ const commands = {
         if (!Object.keys(fullData["Black Market"][username]).length) delete fullData["Black Market"][username];
         return true;
     },
+    "su\\s+(\\d+)\\s*(k?)\\s*(\\w+)\\s*(?:)?": function (amount, thousand, unit) {
+        amount = Math.max(amount | 0, 0);
+        if (thousand) amount *= 1E3;
+        var username = this.nickname || this.user.username;
+        if (typeof unit !== "string" || !unit.replace(/\s/g, "")) return "You must specify the unit type";
+        fullData["Selling Units"][username] = fullData["Selling Units"][username] || {};
+        fullData["Selling Units"][username][unit] = amount;
+        if (!amount) delete fullData["Selling Units"][username];
+        if (!Object.keys(fullData["Selling Units"][username]).length) delete fullData["Selling Units"][username];
+        return true;
+    },
+    "bu\\s+(\\d+)\\s*(k?)\\s*(\\w+)\\s*(?:)?": function (amount, thousand, unit) {
+        amount = Math.max(amount | 0, 0);
+        if (thousand) amount *= 1E3;
+        var username = this.nickname || this.user.username;
+        if (typeof unit !== "string" || !unit.replace(/\s/g, "")) return "You must specify the unit type";
+        fullData["Buying Units"][username] = fullData["Buying Units"][username] || {};
+        fullData["Buying Units"][username][unit] = amount;
+        if (!amount) delete fullData["Buying Units"][username];
+        if (!Object.keys(fullData["Buying Units"][username]).length) delete fullData["Buying Units"][username];
+        return true;
+    },
     /**
      * @this {discord.GuildMember}
      * @param {string} clearMode
@@ -350,7 +420,9 @@ const commands = {
             "wtt": "Trading",
             "tw": "Open Trades",
             "to": "Open Trades",
-            "bm": "Black Market"
+            "bm": "Black Market",
+            "su": "Selling Units",
+            "bu": "Buying Units"
         };
         var username = this.nickname || this.user.username;
         if (!clearMode || !(clearMode in shortcuts)) Object.keys(shortcuts).forEach(clear);
@@ -486,7 +558,7 @@ function readOldMessage(message) {
     var type;
     var textList = message.split(/__\*\*Last\s+Messages\*\*__:\s*/);
     if (textList[1]) {
-        textList[1].split(/\n>?\s*/).filter(Boolean).forEach(function (line) {
+        textList[1].split(/\n\s*>?\s*/).filter(Boolean).forEach(function (line) {
             var result = /^(.+)\s+typed\s+`(.+)`$/.exec(line);
             if (!result || !result[2]) return;
             addLastMessage(result[1], result[2]);
@@ -522,6 +594,8 @@ function createLargeMessage() {
 > Trading: \` wtt 5k wine for 5k sulphur \` or \` wtt 5k w 5000 s \` (\` wtt _what you have_ for _what you want_ \`)
 > Open Trades: \` tw 5k wine \` or \` to 5000 w \`
 > Black Market: \` bm 59:45 lvl 23  \` or \` bm 59:45 23  \`
+> Selling Units: \` su 250 gyros  \` or \` su 2k spartans  \`
+> Buying Units: \` bu 250 gyros  \` or \` bu 2k spartans  \`
 > Clear: \` clear \` or \` clear all \` or \` clear wts \` or \` clear fs \`
 __**Material shortcuts**__:
 > Wood: \` BM \`
