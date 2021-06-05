@@ -486,7 +486,7 @@ function readOldMessage(message) {
     var type;
     var textList = message.split(/__\*\*Last\s+Messages\*\*__:\s*/);
     if (textList[1]) {
-        textList[1].split(/\n/).filter(Boolean).forEach(function (line) {
+        textList[1].split(/\n>?\s*/).filter(Boolean).forEach(function (line) {
             var result = /^(.+)\s+typed\s+`(.+)`$/.exec(line);
             if (!result || !result[2]) return;
             addLastMessage(result[1], result[2]);
@@ -539,6 +539,6 @@ __**Trades**__:
     }).join("\n") + `
 __**Last Messages**__:
 ` + lastMessages.map(function (message) {
-        return message.person + " said `" + message.message + "`";
-    }).join("\n");
+        return "\n> " + message.person + " said `" + message.message + "`";
+    }).join("");
 }
