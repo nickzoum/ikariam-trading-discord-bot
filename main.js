@@ -537,8 +537,7 @@ __**Trades**__:
         });
         return text;
     }).join("\n") + `
-__**Last Messages**__:
-` + lastMessages.map(function (message) {
+__**Last Messages**__:` + lastMessages.map(function (message) {
         return "\n> " + message.person + " said `" + message.message + "`";
     }).join("");
 }
