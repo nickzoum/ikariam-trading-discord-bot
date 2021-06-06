@@ -573,7 +573,7 @@ function readOldMessage(message) {
     var textList = message.split(/__\*\*Last\s+Messages\*\*__:\s*/);
     if (textList[1]) {
         textList[1].split(/\n/).filter(Boolean).forEach(function (line) {
-            var result = /^>\s*(.+)\s+typed\s+`(.+)`$/.exec(line);
+            var result = /^>\s*(.+)\s+said\s+`(.+)`$/.exec(line);
             if (!result || !result[2]) return;
             addLastMessage(result[1], result[2]);
         });
@@ -583,7 +583,7 @@ function readOldMessage(message) {
     message = infoList[1] || infoList[2];
     var list = message.split(/\s*__([^*_(]+)(?:\([/\w]+\))?__/i).slice(1);
     list.forEach(function (text) {
-        if (!type) return type = text, void 0;
+        if (!type) return type = text.replace(/\s+$/, ""), void 0;
         var users = text.split(/\s*>\s(?=[^\s])/).slice(1);
         users.forEach(function (user) {
             var data = user.split(":");
