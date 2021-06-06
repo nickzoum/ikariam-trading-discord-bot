@@ -609,7 +609,7 @@ __**Trades**__:
         var shortcut = Object.entries(shortcuts).map(function ([shortcut, fullName]) {
             if (fullName === category) return shortcut;
         }).filter(Boolean).join("/");
-        if (shortcut) shortcut = "(" + shortcut + ")";
+        if (shortcut) shortcut = " (" + shortcut + ")";
         else shortcut = "";
         var text = "__" + category + shortcut + "__";
         Object.entries(users).forEach(function ([userName, data]) {
