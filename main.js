@@ -15,6 +15,8 @@ const resources = {
 
 const modes = { offers: "offers", wants: "wants" };
 
+const debugMode = false;
+
 const shortcuts = {
     "fs": "Friend Slots",
     "ct": "CTs",
@@ -474,7 +476,7 @@ function setupChannel() {
             }
             list.forEach(function (message) {
                 if (message.author.id === client.user.id) {
-                    if (lastMessage) lastMessage.delete();
+                    if (lastMessage && !debugMode) lastMessage.delete();
                     lastMessage = message;
                 }
             });
@@ -483,6 +485,7 @@ function setupChannel() {
                 isReady = true;
                 setupChannel(channel);
             } else {
+                if (debugMode) return;
                 channel.send(createLargeMessage()).then(function (message) {
                     isReady = true;
                     lastMessage = message;
@@ -524,6 +527,11 @@ function readMessage(message) {
         if (result && result[0]) {
             var output = commands[key].apply(member, [].slice.call(result, 1));
             if (output) {
+                if (debugMode) {
+                    if (typeof output === "string") console.log(output);
+                    console.log(text);
+                    return;
+                }
                 if (typeof output === "string") {
                     message.channel.send(`Error with command "**${text}**": ${output}`).then(function (errorMessage) {
                         setTimeout(function () {
@@ -536,12 +544,17 @@ function readMessage(message) {
             }
         }
     }
-    message.delete();
-    message.channel.send(`Invalid command "**${text}**"`).then(function (errorMessage) {
-        setTimeout(function () {
-            errorMessage.delete();
-        }, errorTimeout);
-    });
+    if (debugMode) {
+        console.log("Unknown command");
+        console.log(text);
+    } else {
+        message.delete();
+        message.channel.send(`Invalid command "**${text}**"`).then(function (errorMessage) {
+            setTimeout(function () {
+                errorMessage.delete();
+            }, errorTimeout);
+        });
+    }
 }
 
 function addLastMessage(person, message) {
@@ -559,8 +572,8 @@ function readOldMessage(message) {
     var type;
     var textList = message.split(/__\*\*Last\s+Messages\*\*__:\s*/);
     if (textList[1]) {
-        textList[1].split(/\n\s*>?\s*/).filter(Boolean).forEach(function (line) {
-            var result = /^(.+)\s+typed\s+`(.+)`$/.exec(line);
+        textList[1].split(/\n/).filter(Boolean).forEach(function (line) {
+            var result = /^>\s*(.+)\s+typed\s+`(.+)`$/.exec(line);
             if (!result || !result[2]) return;
             addLastMessage(result[1], result[2]);
         });
@@ -568,7 +581,7 @@ function readOldMessage(message) {
     message = textList[0];
     var infoList = message.split(/__\*\*Trades\*\*__:\s*/);
     message = infoList[1] || infoList[2];
-    var list = message.split(/\s*__([^*_]+)(?:\([\\\w]+\))?__/).slice(1);
+    var list = message.split(/\s*__([^*_(]+)(?:\([/\w]+\))?__/i).slice(1);
     list.forEach(function (text) {
         if (!type) return type = text, void 0;
         var users = text.split(/\s*>\s(?=[^\s])/).slice(1);
@@ -583,6 +596,7 @@ function readOldMessage(message) {
 }
 
 function printLargeMessage() {
+    if (debugMode) return;
     lastMessage.edit(createLargeMessage());
 }
 
