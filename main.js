@@ -15,6 +15,19 @@ const resources = {
 
 const modes = { offers: "offers", wants: "wants" };
 
+const shortcuts = {
+    "fs": "Friend Slots",
+    "ct": "CTs",
+    "wts": "Selling",
+    "wtb": "Buying",
+    "wtt": "Trading",
+    "tw": "Open Trades",
+    "to": "Open Trades",
+    "bm": "Black Market",
+    "su": "Selling Units",
+    "bu": "Buying Units"
+};
+
 var fullData = {
     "CTs": {},
     "Friend Slots": {},
@@ -412,18 +425,6 @@ const commands = {
      * @returns {boolean | undefined}
      */
     "clear(?:\\s*(fs|ct|wts|wtb|wtt|all|bm|tw|to|su|bu|\\*))?": function (clearMode) {
-        var shortcuts = {
-            "fs": "Friend Slots",
-            "ct": "CTs",
-            "wts": "Selling",
-            "wtb": "Buying",
-            "wtt": "Trading",
-            "tw": "Open Trades",
-            "to": "Open Trades",
-            "bm": "Black Market",
-            "su": "Selling Units",
-            "bu": "Buying Units"
-        };
         var username = this.nickname || this.user.username;
         if (!clearMode || !(clearMode in shortcuts)) Object.keys(shortcuts).forEach(clear);
         else clear(clearMode);
@@ -545,7 +546,7 @@ function readMessage(message) {
 
 function addLastMessage(person, message) {
     if (!person) person = "Unknown User";
-    lastMessages.unshift({ person: person, message: message });
+    lastMessages.unshift({ person: person, message: message.replace(/\n([\s\n]|.)*/, "...") });
     lastMessages.splice(3, lastMessages.length - 3);
 }
 
@@ -567,7 +568,7 @@ function readOldMessage(message) {
     message = textList[0];
     var infoList = message.split(/__\*\*Trades\*\*__:\s*/);
     message = infoList[1] || infoList[2];
-    var list = message.split(/\s*__([^*_]+)__/).slice(1);
+    var list = message.split(/\s*__([^*_]+)(?:\([\\\w]+\))?__/).slice(1);
     list.forEach(function (text) {
         if (!type) return type = text, void 0;
         var users = text.split(/\s*>\s(?=[^\s])/).slice(1);
@@ -605,7 +606,12 @@ __**Material shortcuts**__:
 > Sulphur: \` S \`
 __**Trades**__:
 ` + Object.entries(fullData).map(function ([category, users]) {
-        var text = "__" + category + "__";
+        var shortcut = Object.values(shortcuts).map(function ([shortcut, fullName]) {
+            if (fullName === category) return shortcut;
+        }).filter(Boolean).join("/");
+        if (shortcut) shortcut = "(" + shortcut + ")";
+        else shortcut = "";
+        var text = "__" + category + shortcut + "__";
         Object.entries(users).forEach(function ([userName, data]) {
             text += "\n> " + userName + ": " + stringify[category](data);
         });
