@@ -606,7 +606,7 @@ __**Material shortcuts**__:
 > Sulphur: \` S \`
 __**Trades**__:
 ` + Object.entries(fullData).map(function ([category, users]) {
-        var shortcut = Object.values(shortcuts).map(function ([shortcut, fullName]) {
+        var shortcut = Object.entries(shortcuts).map(function ([shortcut, fullName]) {
             if (fullName === category) return shortcut;
         }).filter(Boolean).join("/");
         if (shortcut) shortcut = "(" + shortcut + ")";
